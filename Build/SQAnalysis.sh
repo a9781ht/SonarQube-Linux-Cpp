@@ -53,3 +53,14 @@ rm -f $HOME/build-wrapper-linux-x86.zip
 rm -f $HOME/sonar-scanner-cli-$ScannerVersion-linux-x64.zip
 rm -rf $HOME/build-wrapper-linux-x86
 rm -rf $HOME/sonar-scanner-$ScannerVersion-linux-x64
+
+# check upload status (avoid scanning quality gate successfully but upload to server failed)
+echo
+echo '-check upload status'
+TASK_URL=$(grep ceTaskUrl ../.scannerwork/report-task.txt | awk -F 'ceTaskUrl=' '{print $2}')
+STATUS=$(curl -u $SONAR_TOKEN: ${TASK_URL} 2>&1 | grep -oE '("status":")[^"]*' | awk -F '"' '{print $NF}')
+[ -z "$TASK_URL" ] && STATUS='FAILED'
+echo 'Upload Status : '$STATUS
+if [[ $STATUS != SUCCESS ]]; then
+  exit 1;
+fi
